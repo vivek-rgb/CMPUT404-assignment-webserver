@@ -109,7 +109,6 @@ class MyWebServer(socketserver.BaseRequestHandler):
         
 
     def get_request_type(self):
-        print(self.data.split()[0])
         return self.data.split()[0]
     
     def get_request_path(self):
