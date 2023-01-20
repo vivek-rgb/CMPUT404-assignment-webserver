@@ -53,8 +53,14 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         # get the path of the requested file
         # only allow files in the www and sub directories
-        requested_file_path = os.path.abspath("www" + requested_path)
-        print("file path requested: %s" % requested_file_path)
+        requested_file_path = os.path.abspath("www"+ requested_path)
+        print("Requested file path: ",  requested_file_path)
+
+        # check if the requested file is in the www directory
+        if requested_path.startswith("/etc"):
+            self.send_404()
+            print("Error: file not found")
+            return
 
         # check if the requested file exists
         if os.path.isfile(requested_file_path):
@@ -68,12 +74,12 @@ class MyWebServer(socketserver.BaseRequestHandler):
             http_response += "\r\n"
         
             self.request.sendall(bytearray(http_response + file,'utf-8'))
-            return
+            
         
 
         
         # check if the requested file is a directory
-        elif os.path.isdir(requested_file_path):
+        elif os.path.isdir(requested_file_path) and requested_path.endswith("/"):  
             http_response = f"HTTP/1.1 200 OK\r\n"
             # open index.html if it exists
             if os.path.isfile(requested_file_path + "/index.html"):
@@ -92,9 +98,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
 
         # check if redirection is required
-        elif os.path.isdir(requested_file_path + "/"):
+        elif os.path.isdir(requested_file_path ) and not requested_path.endswith("/") :
+
             http_response = f"HTTP/1.1 301 Moved Permanently\r\n"
-            http_response += f"Location: {requested_file_path}/\r\n"
+            http_response += f"Location: http://127.0.0.1:8080{requested_path}/ \r\n"
             # end of header
             http_response += "\r\n"
             self.request.sendall(bytearray(http_response,'utf-8'))
@@ -115,10 +122,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
         return self.data.split()[1]
     
     def send_405(self):
-        self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed",'utf-8'))
+        self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed\r\n\r\n",'utf-8'))
 
     def send_404(self):
-        self.request.sendall(bytearray("HTTP/1.1 404 Not Found",'utf-8'))
+        self.request.sendall(bytearray("HTTP/1.1 404 Not Found\r\n\r\n",'utf-8'))
 
 
 if __name__ == "__main__":
