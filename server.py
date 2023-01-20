@@ -44,31 +44,20 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # only handle GET requests
         if self.get_request_type() != "GET":
             self.send_405()
-            print("Error: only GET requests are supported")
             return
         
         # get the request path
         requested_path = self.get_request_path()
-        print("path requested: %s" % requested_path)
 
         # get the path of the requested file
         # only allow files in the www and sub directories
         requested_file_path = os.path.abspath("www"+ requested_path)
         
-        print("ABSOLUTE PATH IS ", os.path.abspath("www"))
-        print("Requested file path: ",  requested_file_path)
-
         # check if the requested file is in the www directory
         if os.path.commonpath([requested_file_path, os.path.abspath("www")]) != os.path.abspath("www"):
             self.send_404()
-            print("Error: file not found")
             return
-     
-
-
-
-
-
+    
         # check if the requested file exists
         if os.path.isfile(requested_file_path):
             http_response = f"HTTP/1.1 200 OK\r\n"
@@ -80,10 +69,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
             # end of header
             http_response += "\r\n"
             self.request.sendall(bytearray(http_response + file,'utf-8'))
-            print("************FILE FOUND HEADER: ", http_response)
             return
-        
-
         
         # check if the requested file is a directory
         elif os.path.isdir(requested_file_path) and requested_path.endswith("/"):  
@@ -100,11 +86,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
                 http_response += "\r\n"
 
                 self.request.sendall(bytearray(http_response + file,'utf-8'))   
-                print("************ DIRECTORY FOUND HEADER: ", http_response)
                 return
             
             self.send_404()
-            print("************ NOTHING FOUND")
             return           
 
 
@@ -116,13 +100,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
             # end of header
             http_response += "\r\n"
             self.request.sendall(bytearray(http_response,'utf-8'))
-            print("************ REDIRECTING HEADER: ", http_response)
             return
         
         # file not found
         else:
             self.send_404()
-            print("Error: file not found")
             return
         
 
