@@ -1,5 +1,13 @@
 #  coding: utf-8 
 import socketserver
+import os
+import mimetypes
+
+
+# You will need to create a class that inherits from BaseHTTPRequestHandler
+# and override the do_GET method. You will also need to create a server
+# that inherits from TCPServer and pass in your request handler class.
+
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
 # 
@@ -30,9 +38,34 @@ import socketserver
 class MyWebServer(socketserver.BaseRequestHandler):
     
     def handle(self):
-        self.data = self.request.recv(1024).strip()
+        self.data = self.request.recv(1024).strip().decode('utf-8')
         print ("Got a request of: %s\n" % self.data)
+
+        # get the request type
+        request_type = self.get_request_type()
+
+        # only handle GET requests
+        if request_type != "GET":
+            self.send_405()
+            return
+        
+            
+        
+
+
+
+
+
         self.request.sendall(bytearray("OK",'utf-8'))
+
+    def get_request_type(self):
+        return self.data.split()[0]
+    
+    def get_request_path(self):
+        return self.data.split()[1]
+    
+    def send_405(self):
+        self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed",'utf-8'))
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
