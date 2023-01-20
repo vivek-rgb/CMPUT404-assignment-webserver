@@ -62,9 +62,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
             file = open(requested_file_path ).read()
             http_response += "Content-Length: " + str(len(file))
             http_response+= "\r\n"
-            http_response += f"Content-Type: {mimetypes.guess_type(requested_file_path)[0]}"
-            print(" ***********************************Content-Type: " + mimetypes.guess_type(requested_file_path)[0])
+            http_response += f"Content-Type: {mimetypes.guess_type(requested_file_path)[0]}; charset=utf-8\r\n"
+
+            # end of header
             http_response += "\r\n"
+        
             self.request.sendall(bytearray(http_response + file,'utf-8'))
             return
         
@@ -73,9 +75,19 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # check if the requested file is a directory
         elif os.path.isdir(requested_file_path):
             http_response = f"HTTP/1.1 200 OK\r\n"
-            http_response += f"Content-Type: text/{mimetypes.guess_type(requested_file_path)[0]}"
-            http_response += "\r\n"
-            self.request.sendall(bytearray(http_response ,'utf-8'))
+            # open index.html if it exists
+            if os.path.isfile(requested_file_path + "/index.html"):
+                file = open(requested_file_path + "/index.html").read()
+                http_response += "Content-Length: " + str(len(file))
+                http_response += "\r\n"
+                http_response += f"Content-Type: text/html; charset=utf-8\r\n"
+
+                # end of header
+                http_response += "\r\n"
+
+                self.request.sendall(bytearray(http_response + file,'utf-8'))
+                return
+            self.request.sendall(bytearray(http_response,'utf-8'))
             return           
 
 
@@ -83,6 +95,7 @@ class MyWebServer(socketserver.BaseRequestHandler):
         elif os.path.isdir(requested_file_path + "/"):
             http_response = f"HTTP/1.1 301 Moved Permanently\r\n"
             http_response += f"Location: {requested_file_path}/\r\n"
+            # end of header
             http_response += "\r\n"
             self.request.sendall(bytearray(http_response,'utf-8'))
             return
