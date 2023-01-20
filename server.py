@@ -54,13 +54,20 @@ class MyWebServer(socketserver.BaseRequestHandler):
         # get the path of the requested file
         # only allow files in the www and sub directories
         requested_file_path = os.path.abspath("www"+ requested_path)
+        
+        print("ABSOLUTE PATH IS ", os.path.abspath("www"))
         print("Requested file path: ",  requested_file_path)
 
         # check if the requested file is in the www directory
-        # if requested_path.startswith("/etc"):
-        #     self.send_404()
-        #     print("Error: file not found")
-        #     return
+        if os.path.commonpath([requested_file_path, os.path.abspath("www")]) != os.path.abspath("www"):
+            self.send_404()
+            print("Error: file not found")
+            return
+     
+
+
+
+
 
         # check if the requested file exists
         if os.path.isfile(requested_file_path):
