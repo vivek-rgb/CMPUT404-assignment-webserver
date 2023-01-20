@@ -41,24 +41,61 @@ class MyWebServer(socketserver.BaseRequestHandler):
         self.data = self.request.recv(1024).strip().decode('utf-8')
         print ("Got a request of: %s\n" % self.data)
 
-        # get the request type
-        request_type = self.get_request_type()
-
         # only handle GET requests
-        if request_type != "GET":
+        if self.get_request_type() != "GET":
             self.send_405()
+            print("Error: only GET requests are supported")
             return
         
-            
+        # get the request path
+        requested_path = self.get_request_path()
+        print("path requested: %s" % requested_path)
+
+        # get the path of the requested file
+        # only allow files in the www and sub directories
+        requested_file_path = os.path.abspath("www" + requested_path)
+        print("file path requested: %s" % requested_file_path)
+
+        # check if the requested file exists
+        if os.path.isfile(requested_file_path):
+            http_response = f"HTTP/1.1 200 OK\r\n"
+            file = open(requested_file_path ).read()
+            http_response += "Content-Length: " + str(len(file))
+            http_response+= "\r\n"
+            http_response += f"Content-Type: {mimetypes.guess_type(requested_file_path)[0]}"
+            print(" ***********************************Content-Type: " + mimetypes.guess_type(requested_file_path)[0])
+            http_response += "\r\n"
+            self.request.sendall(bytearray(http_response + file,'utf-8'))
+            return
         
 
+        
+        # check if the requested file is a directory
+        elif os.path.isdir(requested_file_path):
+            http_response = f"HTTP/1.1 200 OK\r\n"
+            http_response += f"Content-Type: text/{mimetypes.guess_type(requested_file_path)[0]}"
+            http_response += "\r\n"
+            self.request.sendall(bytearray(http_response ,'utf-8'))
+            return           
 
 
-
-
-        self.request.sendall(bytearray("OK",'utf-8'))
+        # check if redirection is required
+        elif os.path.isdir(requested_file_path + "/"):
+            http_response = f"HTTP/1.1 301 Moved Permanently\r\n"
+            http_response += f"Location: {requested_file_path}/\r\n"
+            http_response += "\r\n"
+            self.request.sendall(bytearray(http_response,'utf-8'))
+            return
+        
+        # file not found
+        else:
+            self.send_404()
+            print("Error: file not found")
+            return
+        
 
     def get_request_type(self):
+        print(self.data.split()[0])
         return self.data.split()[0]
     
     def get_request_path(self):
@@ -66,6 +103,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
     
     def send_405(self):
         self.request.sendall(bytearray("HTTP/1.1 405 Method Not Allowed",'utf-8'))
+
+    def send_404(self):
+        self.request.sendall(bytearray("HTTP/1.1 404 Not Found",'utf-8'))
+
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
